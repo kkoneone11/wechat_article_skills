@@ -1,0 +1,35 @@
+
+# RSS聚合器配置文件
+sources:
+  - name: "tgb"
+    url: "https://xueqiu.com/rss"
+    category: "股票"
+    priority: 1
+    enabled: true
+#  - name: "东方财富"
+#    url: "http://eastmoney.com/rss"
+#    category: "财经"
+#    priority: 2
+#    enabled: true
+
+filtering:
+  keywords:
+    include: ["股票", "股市", "A股", "港股", "美股", "基金", "投资", "证券", "理财", "金融"]
+    exclude: ["广告", "推广", "招聘", "活动", "招聘"]
+  min_relevance_score: 0.3
+  max_age_hours: 24
+
+output:
+  format: "json"  # json, markdown
+  max_articles: 50
+  include_full_content: false
+
+caching:
+  enabled: true
+  retention_days: 7
+  cache_file: ".rss_cache.json"
+
+request:
+  timeout: 10
+  retry_attempts: 3
+  delay_between_requests: 1
