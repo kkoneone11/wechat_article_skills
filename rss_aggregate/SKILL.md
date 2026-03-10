@@ -19,7 +19,7 @@ allowed-tools: Read, Write, Bash
 首次使用前需要安装依赖包：
 
 ```bash
-cd /Users/huangzhengyi/PycharmProjects/wechat_article_skills
+cd /wechat_article_skills
 pip install -r rss_aggregate/requirements.txt
 ```
 
@@ -31,9 +31,8 @@ pip install -r rss_aggregate/requirements.txt
 |------|---------|
 | 使用默认配置 | 直接运行聚合器 |
 | 需要添加自定义RSS源 | 编辑 `config.yaml` 文件 |
-| 访问本地RSS源 | 使用 `access_local_rss.py` 脚本 |
 
-**配置文件位置**：`/Users/huangzhengyi/PycharmProjects/wechat_article_skills/rss_aggregate/config.yaml`
+**配置文件位置**：`/rss_aggregate/config.yaml`
 
 **配置示例**：
 ```yaml
@@ -66,27 +65,13 @@ cd /Users/huangzhengyi/PycharmProjects/wechat_article_skills
 python -m rss_aggregate.scripts.access_local_rss
 ```
 
-**直接使用curl命令访问本地RSS源**：
-```bash
-curl -X GET "http://localhost:1200/taoguba/blog/11056656" \
-  -H "Accept: application/xml,text/xml,application/html,*/*" \
-  -H "Accept-Language: zh-CN,zh;q=0.9,en;q=0.8" \
-  -H "User-Agent: Mozilla/5.0 (compatible; RSS Reader; +http://localhost:1200)" \
-  -H "Connection: keep-alive" \
-  --compressed \
-  --location \
-  --max-time 30
-```
 
 ### 步骤4：检查输出结果
 
-**输出文件**：
-- `output_rss_data.json` - 供wechat-tech-writer使用的JSON格式
-- `output_rss_data.md` - Markdown格式数据
-- `rss_for_tech_writer.md` - 为tech-writer优化的格式
-- `local_rss_data.json` - 本地RSS源数据
-- `local_rss_data.md` - 本地RSS源Markdown格式
-- `local_rss_for_tech_writer.md` - 本地RSS源供tech-writer使用
+**输出文件命名规范**：
+- `当日日期-output_rss_data.md`
+如：
+- `2026-03-09-output_rss_data.md` - Markdown格式数据
 
 **检查命令**：
 ```bash
@@ -100,57 +85,28 @@ head -20 output_rss_data.md
 ### 步骤5：与微信技能集成
 
 **与wechat-tech-writer集成**：
-- 使用生成的JSON或Markdown文件作为输入
+- 使用生成的JSON或Markdown文件作为wechat-tech-writer的输入，让这个skill去改写文章
 - 文件格式与tech-writer输入格式兼容
 
 **与wechat-article-formatter集成**：
-- 输出格式可直接被formatter处理
+- wechat-tech-writer的输出格式需要可直接被formatter处理
 - 提供Markdown格式的文章内容
 
 ---
 
 ## 🔄 与微信技能集成
 
-### 与 wechat-tech-writer 的协作流程
+### 与其他skill的协作流程
 
 **完整工作流**：
 ```
-RSS源 -> RSS聚合器 -> 标准化数据 -> wechat-tech-writer -> 格式化 -> wechat-article-formatter -> 微信文章
+rss_aggregate -> wechat-tech-writer -> wechat-article-formatter -> wechat-draft-publisher
 ```
 
 **集成方式**：
-1. RSS聚合器输出结构化数据
-2. tech-writer根据数据生成文章
-3. 可以将RSS文章作为参考内容
-4. 自动生成文章大纲和要点
+1. RSS聚合器输出爬取到的数据
+2. tech-writer根据RSS文章作为参考内容改写生成文章，自动生成文章大纲和要点
 
-**数据格式**：
-```json
-{
-  "meta": {
-    "generated_at": "2026-03-07T10:30:00Z",
-    "total_articles": 25,
-    "sources_used": 5
-  },
-  "articles": [
-    {
-      "id": "unique_identifier",
-      "title": "文章标题",
-      "summary": "文章摘要",
-      "content": "完整内容（可选）",
-      "link": "https://original-link.com",
-      "pub_date": "2026-03-07T09:15:00Z",
-      "source": {
-        "name": "雪球",
-        "url": "https://xueqiu.com/rss",
-        "category": "股票"
-      },
-      "tags": ["A股", "科技股", "投资策略"],
-      "relevance_score": 0.85
-    }
-  ]
-}
-```
 
 ### 与 wechat-article-formatter 的协作
 
@@ -164,10 +120,8 @@ RSS源 -> RSS聚合器 -> 标准化数据 -> wechat-tech-writer -> 格式化 -> 
 ## 📚 参考文档
 
 **详细配置指南**：`references/configuration-guide.md`
-**API使用说明**：`references/api-usage.md`
 **本地RSS源设置**：`references/local-rss-setup.md`
 **与微信技能集成**：`references/integration-with-wechat-skills.md`
-**常见问题**：`references/troubleshooting.md`
 
 ---
 

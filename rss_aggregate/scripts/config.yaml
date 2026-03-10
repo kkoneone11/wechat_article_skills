@@ -1,16 +1,16 @@
 
 # RSS聚合器配置文件
 sources:
-  - name: "tgb"
-    url: "https://xueqiu.com/rss"
+  - name: "淘股吧博客-米开朗"
+    url: "http://localhost:1200/taoguba/blog/11056656"
     category: "股票"
     priority: 1
     enabled: true
-#  - name: "东方财富"
-#    url: "http://eastmoney.com/rss"
-#    category: "财经"
-#    priority: 2
-#    enabled: true
+  - name: "淘股吧博客-韭师"
+    url: "http://localhost:1200/taoguba/blog/7737030"
+    category: "股票"
+    priority: 1
+    enabled: true
 
 filtering:
   keywords:

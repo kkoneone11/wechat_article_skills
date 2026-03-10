@@ -52,6 +52,9 @@ allowed-tools: WebSearch, WebFetch, Read, Write, Edit, Bash
    - 评测类：客观性 + 数据性
    - 教程类：可操作性 + 详细性
 
+3. **特殊情况处理**
+   - 如果用户要求基于已有股评文章进行改写和总结（通常这些文章来自rss_aggregate skill），则跳过步骤2和步骤3，直接进入步骤4
+
 ---
 
 ### 步骤2：搜索高质量内容源
@@ -65,6 +68,8 @@ allowed-tools: WebSearch, WebFetch, Read, Write, Edit, Bash
 - **第4轮**：补充验证（根据前3轮结果补充缺失信息）
 
 **质量标准**：优先选择官方文档、知名技术博客、权威媒体报道
+
+**特殊情况**：如果用户要求基于已有股评文章进行改写和总结（通常这些文章来自rss_aggregate skill），则此步骤会被跳过。
 
 ---
 
@@ -85,6 +90,8 @@ allowed-tools: WebSearch, WebFetch, Read, Write, Edit, Bash
 - 优势和局限性
 - 最新动态和发展方向
 
+**特殊情况**：如果用户要求基于已有股评文章进行改写和总结（通常这些文章来自rss_aggregate skill），则此步骤会被跳过。
+
 ---
 
 ### 步骤4：内容改写与创作
@@ -95,8 +102,15 @@ allowed-tools: WebSearch, WebFetch, Read, Write, Edit, Bash
 - 增加生动的比喻和实例
 - 保持事实准确性
 
+**特殊情况处理**：如果用户要求基于已有股评文章进行改写和总结（通常这些文章来自rss_aggregate skill），则直接使用这些已有的股评文章作为内容基础进行改写和总结。
+
+**文章类型调整**：
+- 技术类文章：遵循原有的推荐结构
+- 股评类文章：采用专门的股评结构（详见下方股评风格指南）
+
 **推荐文章结构**（2000-3000字）：
 
+**技术类文章结构**：
 ```
 1. 引子（100-200字）
    用一个场景或问题引入话题
@@ -123,13 +137,38 @@ allowed-tools: WebSearch, WebFetch, Read, Write, Edit, Bash
    展望未来
 ```
 
+**股评类文章结构**：
+```
+1. 市场概况（100-200字）
+   当日/近期市场整体表现概述
+
+2. 核心观点（200-400字）
+   本次股评的核心论点或投资建议
+
+3. 行业分析（400-700字）
+   相关行业板块的表现和趋势分析
+   关键数据和指标解读
+
+4. 个股点评（400-700字）
+   重点关注股票的表现和分析
+   技术面和基本面分析
+
+5. 风险提示（200-400字）
+   投资风险和注意事项
+
+6. 后市展望（100-200字）
+   未来走势预判和操作建议
+```
+
 **语言风格**：
 - 使用"我们"、"你"等第二人称，增加亲切感
 - 适当使用emoji（但不要过度）
 - 短句优于长句（不超过25字）
 - 多用并列结构和小标题
 
-**详细写作指南**：参见 [references/writing-style.md](references/writing-style.md)
+**详细写作指南**：
+- 技术类文章：参见 [references/writing-style.md](references/writing-style.md)
+- 股评类文章：参见 [references/stock-writing-style.md](references/stock-writing-style.md)
 
 ---
 

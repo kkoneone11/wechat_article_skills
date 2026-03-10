@@ -4,8 +4,9 @@
 
 RSS聚合器在整个微信文章创作流程中的位置：
 
+**完整工作流**：
 ```
-RSS源 -> RSS聚合器 -> 标准化数据 -> wechat-tech-writer -> 格式化 -> wechat-article-formatter -> 微信文章
+rss_aggregate -> wechat-tech-writer -> wechat-article-formatter -> wechat-draft-publisher
 ```
 
 ## 与wechat-tech-writer集成
