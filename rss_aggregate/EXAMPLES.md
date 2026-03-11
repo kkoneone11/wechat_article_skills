@@ -242,3 +242,20 @@ with open('output_rss_data.json', 'r', encoding='utf-8') as f:
 - 来自多个源的合并文章列表
 - 按优先级和时间排序
 - 包含源信息的文章数据
+
+---
+
+## 示例6：完整技能链路串联 - 从RSS聚合到微信发布
+
+### 场景
+用户希望"爬取今天的股评并改写文章内容，然后推送到微信"，这需要将多个技能串联起来形成完整的工作流。
+
+### 步骤
+**生成改写股评调用skill的完整工作流**：
+```
+rss_aggregate -> wechat-tech-writer -> wechat-article-formatter -> wechat-draft-publisher
+```
+1. 调用rss_aggregate获取最新的股评内容
+2. 通过wechat-tech-writer技术写作器改写文章内容
+3. 通过wechat-article-formatter将改写文章进文章格式化器美化格式
+4. 使用wechat-draft-publisher草稿发布器推送至微信公众号

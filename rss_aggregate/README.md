@@ -89,13 +89,35 @@ RSS源 -> RSS聚合器 -> 标准化数据 -> wechat-tech-writer -> 格式化 -> 
 
 ## 配置文件
 
-`config.yaml` 文件允许您自定义：
-- RSS源列表
-- 过滤关键词
-- 相关性阈值
-- 输出格式选项
-- 缓存设置
-- 请求参数
+`config.yaml` 文件允许您自定义各种参数：
+
+### sources (RSS源列表)
+- `name`: RSS源名称，用于标识和显示
+- `url`: RSS源URL地址
+- `category`: 分类标签，如"股票"、"财经"等
+- `priority`: 优先级，数字越大优先级越高
+- `enabled`: 是否启用该源，true/false
+
+### filtering (内容过滤设置)
+- `keywords.include`: 必须包含的关键词列表，文章必须包含其中任一关键词才会被保留
+- `keywords.exclude`: 必须排除的关键词列表，包含其中任一关键词的文章会被过滤掉
+- `min_relevance_score`: 最小相关性评分阈值，0.0-1.0之间，低于此值的文章会被过滤
+- `max_age_hours`: 最大文章年龄（小时），只保留指定时间内的文章，用于控制内容时效性
+
+### output (输出设置)
+- `format`: 输出格式，支持"json"或"markdown"
+- `max_articles`: 最大返回文章数量限制
+- `include_full_content`: 是否包含完整内容
+
+### caching (缓存设置)
+- `enabled`: 是否启用缓存功能，true/false
+- `retention_days`: 缓存保留天数
+- `cache_file`: 缓存文件路径
+
+### request (请求设置)
+- `timeout`: HTTP请求超时时间（秒）
+- `retry_attempts`: 请求失败时的重试次数
+- `delay_between_requests`: 请求之间的延迟时间（秒）
 
 ## 扩展性
 

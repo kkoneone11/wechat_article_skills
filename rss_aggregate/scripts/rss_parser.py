@@ -141,16 +141,31 @@ class RSSParser:
         Returns:
             相关性评分 (0-1)
         """
+        # 注意：这里的方法会被_parse_entry方法调用，但我们无法直接访问_clean_content
+        # 需要从entry对象中获取原始内容
         title = getattr(entry, 'title', '').lower()
         summary = getattr(entry, 'summary', '').lower()
-        content = getattr(entry, 'summary', '').lower()
+        
+        # 获取原始内容
+        content = ''
+        if hasattr(entry, 'content') and entry.content:
+            # 通常content是列表，取第一个内容
+            content = entry.content[0].value if entry.content else ''
+        elif hasattr(entry, 'summary'):
+            content = entry.summary
+        elif hasattr(entry, 'description'):
+            content = entry.description
+        
+        # 清理HTML标签（与_parse_entry方法中的清理保持一致）
+        import re
+        clean_content = re.sub('<[^<]+?>', '', content).lower()
         
         # 基础关键词列表（可以从配置中读取）
         keywords = ["股票", "股市", "A股", "港股", "美股", "基金", "投资", "金融", "证券", "理财"]
         
         # 计算关键词匹配分数
         matched_keywords = 0
-        total_text = f"{title} {summary} {content}"
+        total_text = f"{title} {summary} {clean_content}".lower()
         
         for keyword in keywords:
             if keyword.lower() in total_text:
