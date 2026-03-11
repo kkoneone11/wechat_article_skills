@@ -210,13 +210,34 @@ class RSSAggregator:
             print(f"警告: 解析RSS源 '{source['name']}' 失败: {parsed_feed['error']}")
             return []
         
+        # 统计过滤信息
+        total_entries = len(parsed_feed.get('entries', []))
+        processed_entries = 0
+        filtered_out = 0
+        already_processed = 0
+        
         # 过滤内容
         filtered_articles = []
         for entry in parsed_feed.get('entries', []):
-            if not self.cache_manager.is_processed(entry.get('id') or entry.get('link')):
+            entry_id = entry.get('id') or entry.get('link')
+            
+            if not self.cache_manager.is_processed(entry_id):
+                processed_entries += 1
                 if self.content_filter.is_relevant(entry):
                     entry_with_source = {**entry, 'source': result['source']}
                     filtered_articles.append(entry_with_source)
+                else:
+                    filtered_out += 1
+            else:
+                already_processed += 1
+        
+        # 打印过滤统计信息
+        print(f"RSS源 '{source['name']}' 处理统计:")
+        print(f"  - 总条目数: {total_entries}")
+        print(f"  - 已缓存跳过: {already_processed}")
+        print(f"  - 新条目处理: {processed_entries}")
+        print(f"  - 符合条件: {len(filtered_articles)}")
+        print(f"  - 过滤掉: {filtered_out}")
         
         # 缓存已处理的文章ID
         for article in filtered_articles:
@@ -254,6 +275,8 @@ class RSSAggregator:
                 "articles": []
             }
         
+        print(f"开始处理 {len(enabled_sources)} 个RSS源...")
+        
         # 异步获取所有RSS源内容
         async with aiohttp.ClientSession() as session:
             tasks = [self._process_source(session, source) for source in enabled_sources]
@@ -288,6 +311,8 @@ class RSSAggregator:
             },
             "articles": all_articles
         }
+        
+        print(f"\n聚合完成！最终保留 {len(all_articles)} 篇文章，来自 {sources_count} 个数据源")
         
         return aggregation_result
 

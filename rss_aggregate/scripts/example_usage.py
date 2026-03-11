@@ -29,7 +29,6 @@ def main():
 
     # 创建聚合器实例
     aggregator = RSSAggregator(config_path=str(config_path))
-    aggregator.cache_manager.enabled = False
 
     # 添加本地RSS源 (模拟 http://localhost:1200/taoguba/blog/11056656)
     aggregator.add_source(
@@ -75,8 +74,6 @@ def main():
         # print("✓ 已导出JSON格式数据到 output_rss_data.json")
 
         # 导出为Markdown格式
-        # 获取今日时间，如2026-03-09格式
-        now = datetime.now()
         aggregator.export_to_markdown(result, datetime.now().strftime('%Y-%m-%d')+"-output_rss_data.md")
         print("✓ 已导出Markdown格式数据到 output_rss_data.md")
 
