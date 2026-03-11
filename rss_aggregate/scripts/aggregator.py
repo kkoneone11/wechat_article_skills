@@ -98,35 +98,97 @@ class RSSAggregator:
     async def _fetch_rss_content(self, session: aiohttp.ClientSession, source: dict) -> Optional[dict]:
         """异步获取单个RSS源内容"""
         url = source['url']
+        # 使用更真实的浏览器头部信息
         headers = {
-            "Accept": "application/xml,text/xml,application/html,*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "User-Agent": "Mozilla/5.0 (compatible; RSS Reader; +http://localhost:1200)",
-            "Connection": "keep-alive"
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-Ch-Ua": '"Google Chrome";v="95", "Chromium";v="95", ";Not A Brand";v="99"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Connection": "keep-alive",
+            "Referer": source.get('referer', 'https://www.google.com/')
         }
         
         for attempt in range(self.config['request']['retry_attempts']):
             try:
+                # 增加更具体的超时设置
+                timeout = aiohttp.ClientTimeout(total=self.config['request']['timeout'], 
+                                              connect=5, 
+                                              sock_connect=5, 
+                                              sock_read=10)
                 async with session.get(
                     url, 
                     headers=headers, 
-                    timeout=aiohttp.ClientTimeout(total=self.config['request']['timeout'])
+                    timeout=timeout,
+                    allow_redirects=True  # 允许重定向
                 ) as response:
                     if response.status == 200:
                         content = await response.text()
                         return {
                             'source': source,
                             'content': content,
-                            'success': True
+                            'success': True,
+                            'status_code': response.status,
+                            'headers': dict(response.headers)  # 记录响应头信息，有助于调试
                         }
+                    elif response.status == 404:
+                        print(f"获取RSS源失败 {url}: 状态码 {response.status} - 页面不存在")
+                        # 对于404错误，立即返回失败，不进行重试
+                        break
+                    elif response.status == 403:
+                        print(f"获取RSS源被拒绝 {url}: 状态码 {response.status} - 可能被防火墙拦截或需要认证")
+                        # 对于403错误，记录特殊处理
+                        if attempt < self.config['request']['retry_attempts'] - 1:
+                            await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))  # 递增延迟
+                    elif response.status == 429:
+                        print(f"获取RSS源频率受限 {url}: 状态码 {response.status} - 等待后重试")
+                        # 对于429错误，使用更长的延迟
+                        if attempt < self.config['request']['retry_attempts'] - 1:
+                            await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 2) * 2)  # 更长的延迟
+                    elif response.status >= 500:
+                        print(f"服务器内部错误 {url}: 状态码 {response.status} - 可能是服务器暂时不可用")
+                        # 5xx错误通常表示服务器问题，值得重试
+                        if attempt < self.config['request']['retry_attempts'] - 1:
+                            await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 2))
                     else:
                         print(f"获取RSS源失败 {url}: 状态码 {response.status}")
-            except Exception as e:
-                print(f"获取RSS源异常 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)}")
+                        if attempt < self.config['request']['retry_attempts'] - 1:
+                            await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))  # 递增延迟
+            except aiohttp.ClientConnectorError as e:
+                print(f"连接错误 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)} - 可能是网络连接问题或服务器不可达")
                 if attempt < self.config['request']['retry_attempts'] - 1:
-                    await asyncio.sleep(self.config['request']['delay_between_requests'])
+                    await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))
+            except aiohttp.ServerTimeoutError as e:
+                print(f"服务器超时 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)}")
+                if attempt < self.config['request']['retry_attempts'] - 1:
+                    await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 2))  # 更长的延迟
+            except aiohttp.ClientOSError as e:
+                print(f"客户端操作系统错误 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)}")
+                if attempt < self.config['request']['retry_attempts'] - 1:
+                    await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))
+            except asyncio.TimeoutError as e:
+                print(f"异步超时错误 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)}")
+                if attempt < self.config['request']['retry_attempts'] - 1:
+                    await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 2))  # 更长的延迟
+            except UnicodeDecodeError as e:
+                print(f"编码错误 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)} - 内容编码问题")
+                # 编码错误通常不需要重试
+                break
+            except Exception as e:
+                print(f"获取RSS源异常 {url} (尝试 {attempt+1}/{self.config['request']['retry_attempts']}): {str(e)} - {type(e).__name__}")
+                if attempt < self.config['request']['retry_attempts'] - 1:
+                    await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))
         
-        return {'source': source, 'content': None, 'success': False}
+        return {'source': source, 'content': None, 'success': False, 'status_code': None}
 
     async def _process_source(self, session: aiohttp.ClientSession, source: dict) -> List[Dict]:
         """处理单个RSS源"""
@@ -135,10 +197,18 @@ class RSSAggregator:
             
         result = await self._fetch_rss_content(session, source)
         if not result['success'] or not result['content']:
+            # 记录失败的源
+            status_code = result.get('status_code', 'N/A')
+            print(f"警告: 无法处理RSS源 '{source['name']}' ({source['url']})，状态码: {status_code}")
             return []
         
         # 解析RSS内容
         parsed_feed = self.rss_parser.parse(result['content'], source)
+        
+        # 检查解析是否成功
+        if 'error' in parsed_feed:
+            print(f"警告: 解析RSS源 '{source['name']}' 失败: {parsed_feed['error']}")
+            return []
         
         # 过滤内容
         filtered_articles = []

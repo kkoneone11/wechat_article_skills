@@ -56,13 +56,7 @@ filtering:
 **标准聚合命令**：
 ```bash
 cd /Users/huangzhengyi/PycharmProjects/wechat_article_skills
-python -m rss_aggregate.scripts.example_usage
-```
-
-**访问本地RSS源**：
-```bash
-cd /Users/huangzhengyi/PycharmProjects/wechat_article_skills
-python -m rss_aggregate.scripts.access_local_rss
+python3 -m rss_aggregate.scripts.example_usage
 ```
 
 
@@ -98,13 +92,13 @@ head -20 output_rss_data.md
 
 ### 与其他skill的协作流程
 
-**完整工作流**：
+**生成改写股评完整工作流**：
 ```
 rss_aggregate -> wechat-tech-writer -> wechat-article-formatter -> wechat-draft-publisher
 ```
 
 **集成方式**：
-1. RSS聚合器输出爬取到的数据
+1. 通过rss_aggregate到RSS聚合器将文章输出到本地
 2. tech-writer根据RSS文章作为参考内容改写生成文章，自动生成文章大纲和要点
 
 
@@ -158,7 +152,6 @@ import asyncio
 result = asyncio.run(aggregator.aggregate(max_articles=20))
 
 # 导出结果
-aggregator.export_to_json(result, 'output.json')
 aggregator.export_to_markdown(result, 'output.md')
 ```
 

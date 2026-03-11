@@ -5,8 +5,10 @@ RSS聚合器示例脚本
 """
 
 import asyncio
+from datetime import datetime
 import os
 import sys
+import time
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -30,12 +32,12 @@ def main():
     aggregator.cache_manager.enabled = False
 
     # 添加本地RSS源 (模拟 http://localhost:1200/taoguba/blog/11056656)
-    # aggregator.add_source(
-    #     url="http://localhost:1200/taoguba/blog/11056656",
-    #     name="淘股吧博客",
-    #     category="股票",
-    #     priority=1
-    # )
+    aggregator.add_source(
+        url="http://localhost:1200/taoguba/blog/11056656",
+        name="淘股吧博客",
+        category="股票",
+        priority=1
+    )
     #
     # # 可以添加更多RSS源
     # aggregator.add_source(
@@ -69,21 +71,21 @@ def main():
             print()
 
         # 导出为JSON格式（供wechat-tech-writer使用）
-        aggregator.export_to_json(result, "output_rss_data.json")
-        print("✓ 已导出JSON格式数据到 output_rss_data.json")
+        # aggregator.export_to_json(result, "output_rss_data.json")
+        # print("✓ 已导出JSON格式数据到 output_rss_data.json")
 
         # 导出为Markdown格式
-        aggregator.export_to_markdown(result, "output_rss_data.md")
+        # 获取今日时间，如2026-03-09格式
+        now = datetime.now()
+        aggregator.export_to_markdown(result, datetime.now().strftime('%Y-%m-%d')+"-output_rss_data.md")
         print("✓ 已导出Markdown格式数据到 output_rss_data.md")
 
-        # 为wechat-tech-writer格式化数据
-        from rss_aggregate.scripts.data_formatter import DataFormatter
-        formatter = DataFormatter()
-        tech_writer_format = formatter.format_for_tech_writer(result)
 
-        with open("rss_for_tech_writer.md", "w", encoding="utf-8") as f:
-            f.write(tech_writer_format)
-        print("✓ 已为wechat-tech-writer格式化数据到 rss_for_tech_writer.md")
+        # 为wechat-tech-writer格式化数据
+        # tech_writer_format = aggregator.data_formatter.format_for_tech_writer(result, "rss_for_tech_writer.md")
+        # with open("rss_for_tech_writer.md", "w", encoding="utf-8") as f:
+        #     f.write(tech_writer_format)
+        # print("✓ 已为wechat-tech-writer格式化数据到 rss_for_tech_writer.md")
 
     except Exception as e:
         print(f"聚合过程中出现错误: {str(e)}")
