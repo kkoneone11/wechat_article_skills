@@ -3,14 +3,20 @@
 sources:
   - name: "淘股吧博客-米开朗"
     url: "http://localhost:1200/taoguba/blog/11056656"
+    raw_url: "https://taoguba.com.cn/blog/11056656"  # 备用原始网站URL用于AI工具访问
     category: "股票"
     priority: 1
     enabled: true
+    fallback_enabled: true  # 启用兜底策略
+    fallback_strategy: "ai_crawl"  # 兜底策略：ai_crawl(AI工具访问网页)
   - name: "淘股吧博客-韭师"
     url: "http://localhost:1200/taoguba/blog/7737030"
+    raw_url: "https://taoguba.com.cn/blog/7737030"  # 备用原始网站URL用于AI工具访问
     category: "股票"
     priority: 1
     enabled: true
+    fallback_enabled: true  # 启用兜底策略
+    fallback_strategy: "ai_crawl"  # 兜底策略：ai_crawl(AI工具访问网页)
 
 filtering:
   keywords:
@@ -33,3 +39,10 @@ request:
   timeout: 10
   retry_attempts: 3
   delay_between_requests: 1
+
+fallback:
+  enabled: true  # 全局启用兜底功能
+  max_ai_fallback_attempts: 3  # 最大AI兜底尝试次数
+  daily_ai_fallback_limit: 10  # 每日AI兜底尝试次数限制
+  ai_fallback_delay: 30  # AI兜底尝试间隔（秒）
+  default_strategy: "ai_crawl"  # 默认兜底策略

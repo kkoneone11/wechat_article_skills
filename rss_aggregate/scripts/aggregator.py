@@ -19,12 +19,14 @@ try:
     from .content_filter import ContentFilter
     from .data_formatter import DataFormatter
     from .cache_manager import CacheManager
+    from .fallback_manager import FallbackManager
 except ImportError:
     # 当作为独立模块运行时
     from rss_aggregate.scripts.rss_parser import RSSParser
     from rss_aggregate.scripts.content_filter import ContentFilter
     from rss_aggregate.scripts.data_formatter import DataFormatter
     from rss_aggregate.scripts.cache_manager import CacheManager
+    from rss_aggregate.scripts.fallback_manager import FallbackManager
 
 
 class RSSAggregator:
@@ -35,7 +37,27 @@ class RSSAggregator:
         Args:
             config_path: 配置文件路径
         """
-        self.config = self._load_config(config_path) if config_path else self._default_config()
+        if config_path:
+            self.config = self._load_config(config_path)
+        else:
+            self.config = self._default_config()
+        
+        # 确保配置不为None
+        if self.config is None:
+            self.config = self._default_config()
+        
+        # 确保必要的配置项存在
+        if 'filtering' not in self.config:
+            self.config['filtering'] = self._default_config()['filtering']
+        if 'caching' not in self.config:
+            self.config['caching'] = self._default_config()['caching']
+        if 'output' not in self.config:
+            self.config['output'] = self._default_config()['output']
+        if 'request' not in self.config:
+            self.config['request'] = self._default_config()['request']
+        if 'caching' not in self.config:
+            self.config['caching'] = self._default_config()['caching']
+        
         self.cache_manager = CacheManager(
             enabled=self.config['caching']['enabled'],
             retention_days=self.config['caching']['retention_days'],
@@ -44,12 +66,26 @@ class RSSAggregator:
         self.content_filter = ContentFilter(self.config['filtering'])
         self.data_formatter = DataFormatter()
         self.rss_parser = RSSParser()
+        self.fallback_manager = FallbackManager(self.config)
 
     def _load_config(self, config_path: str) -> dict:
         """加载配置文件"""
         import yaml
-        with open(config_path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+        import os
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f)
+                    # 确保配置不为None
+                    if config is None:
+                        config = self._default_config()
+                    return config
+            else:
+                # 如果配置文件不存在，返回默认配置
+                return self._default_config()
+        except Exception as e:
+            print(f"加载配置文件失败: {e}，使用默认配置")
+            return self._default_config()
 
     def _default_config(self) -> dict:
         """默认配置"""
@@ -188,6 +224,22 @@ class RSSAggregator:
                 if attempt < self.config['request']['retry_attempts'] - 1:
                     await asyncio.sleep(self.config['request']['delay_between_requests'] * (attempt + 1))
         
+        # RSS源获取失败，尝试使用兜底策略
+        print(f"RSS源 {url} 获取失败，尝试使用兜底策略...")
+        
+        if self.fallback_manager.should_attempt_fallback(source):
+            fallback_result = await self.fallback_manager.get_content_with_fallback(source, session)
+            if fallback_result:
+                print(f"兜底策略成功，获取到 {len(fallback_result.get('entries', []))} 条内容")
+                return {
+                    'source': source,
+                    'content': fallback_result,  # 使用fallback结果
+                    'success': True,
+                    'status_code': 200,
+                    'is_fallback': True  # 标记为使用了兜底策略
+                }
+        
+        print(f"所有获取方式均失败，RSS源: {url}")
         return {'source': source, 'content': None, 'success': False, 'status_code': None}
 
     async def _process_source(self, session: aiohttp.ClientSession, source: dict) -> List[Dict]:
@@ -202,13 +254,19 @@ class RSSAggregator:
             print(f"警告: 无法处理RSS源 '{source['name']}' ({source['url']})，状态码: {status_code}")
             return []
         
-        # 解析RSS内容
-        parsed_feed = self.rss_parser.parse(result['content'], source)
-        
-        # 检查解析是否成功
-        if 'error' in parsed_feed:
-            print(f"警告: 解析RSS源 '{source['name']}' 失败: {parsed_feed['error']}")
-            return []
+        # 检查是否使用了兜底策略
+        if result.get('is_fallback'):
+            # 如果使用了兜底策略，内容已经是解析好的格式
+            parsed_feed = result['content']
+            print(f"使用兜底策略处理源: {source['name']}")
+        else:
+            # 解析RSS内容
+            parsed_feed = self.rss_parser.parse(result['content'], source)
+            
+            # 检查解析是否成功
+            if 'error' in parsed_feed:
+                print(f"警告: 解析RSS源 '{source['name']}' 失败: {parsed_feed['error']}")
+                return []
         
         # 统计过滤信息
         total_entries = len(parsed_feed.get('entries', []))
@@ -238,6 +296,8 @@ class RSSAggregator:
         print(f"  - 新条目处理: {processed_entries}")
         print(f"  - 符合条件: {len(filtered_articles)}")
         print(f"  - 过滤掉: {filtered_out}")
+        if result.get('is_fallback'):
+            print(f"  - 使用兜底策略: 是")
         
         # 缓存已处理的文章ID
         for article in filtered_articles:
