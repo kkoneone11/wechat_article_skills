@@ -53,6 +53,27 @@ filtering:
 
 ### 步骤3：运行聚合器
 
+检查example_usage配置：
+
+**走config.yaml配置源：**
+
+通常默认是需要走配置源
+```bash
+aggregator = RSSAggregator(config_path = "config.yaml")
+```
+
+**不走config.yaml配置源，走额外添加源：**
+
+```bash
+aggregator = RSSAggregator()
+aggregator.add_source(
+        url="xxx",
+        name="xxx",
+        category="xx",
+        priority=1
+    )
+```
+
 **标准聚合命令**：
 ```bash
 cd /Users/huangzhengyi/PycharmProjects/wechat_article_skills

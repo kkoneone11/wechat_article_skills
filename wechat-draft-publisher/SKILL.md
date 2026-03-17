@@ -119,6 +119,9 @@ python publisher.py \
 **解决：**
 1. 登录微信公众号后台
 2. 进入 设置 → 基本配置
+3. 打开命令窗口，执行以下命令获取本机公网ip
+   - MAC ：curl ifconfig.me
+   - Windows ：powershell -Command "Invoke-RestMethod -Uri 'https://api.ipify.org'"
 3. 添加服务器 IP 到白名单
 
 ### 错误：AppSecret 错误

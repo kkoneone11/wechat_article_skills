@@ -24,11 +24,8 @@ def main():
     print("RSS内容聚合器示例")
     print("=" * 50)
 
-    current_dir = Path(__file__).parent
-    config_path = current_dir / "config.yaml"
-
-    # 创建聚合器实例
-    aggregator = RSSAggregator(config_path=str(config_path))
+    # 创建聚合器实例，使用默认配置
+    aggregator = RSSAggregator(config_path = "config.yaml")
 
     # 添加本地RSS源 (模拟 http://localhost:1200/taoguba/blog/11056656)
     aggregator.add_source(
